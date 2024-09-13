@@ -56,7 +56,7 @@ namespace OrdersApi.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetOrder(int id)
         {
-            //var response = await requestClient.GetResponse<OrderResult, OrderNotFoundResult>(
+            //var response = await requestClient.GetResponse<OrderResult>(
             //    new VerifyOrder { Id = id });
 
             var response = await requestClient.GetResponse<OrderResult, OrderNotFoundResult, Order>(
