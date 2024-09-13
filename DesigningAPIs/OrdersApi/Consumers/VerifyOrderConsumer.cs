@@ -8,12 +8,29 @@ namespace OrdersApi.Consumers
     {
         public async Task Consume(ConsumeContext<VerifyOrder> context)
         {
-            await context.RespondAsync<OrderResult>(new
+            if (!context.IsResponseAccepted<Order>())
             {
-                Id = context.Message.Id,
-                OrderDate = DateTime.Now,
-                Status = OrderStatus.Pending
-            });
+                throw new ArgumentException(nameof(context));
+            }
+
+            if (context.Message.Id == 1)
+            {
+                await context.RespondAsync<OrderResult>(new
+                {
+                    Id = context.Message.Id,
+                    OrderDate = DateTime.Now,
+                    Status = OrderStatus.Pending
+                });
+            }
+            else
+            {
+                await context.RespondAsync<OrderNotFoundResult>(
+                    new OrderNotFoundResult()
+                    {
+                        ErrorMessage = "Order not found"
+                    });
+
+            }
         }
     }
 }

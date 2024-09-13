@@ -1,4 +1,5 @@
 using Contracts.Infrastructure.Mappings;
+using Contracts.Responses;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Resources;
@@ -58,6 +59,9 @@ namespace OrdersApi
                 // x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("hellos", false));//takes the namespace too
 
                 x.AddConsumer<OrderCreatedConsumer>();
+                x.AddConsumer<VerifyOrderConsumer>();
+
+                x.AddRequestClient<VerifyOrder>();
 
                 //let masstransit scan and find consumers
                 //var entryAssembly = Assembly.GetEntryAssembly();

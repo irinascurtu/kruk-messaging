@@ -54,22 +54,32 @@ namespace OrdersApi.Controllers
 
         // GET: api/Orders/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
+        public async Task<IActionResult> GetOrder(int id)
         {
-            var response = await requestClient.GetResponse<OrderResult>(
-                new VerifyOrder { Id = id });
+            //var response = await requestClient.GetResponse<OrderResult, OrderNotFoundResult>(
+            //    new VerifyOrder { Id = id });
+
+            var response = await requestClient.GetResponse<OrderResult, OrderNotFoundResult, Order>(
+                new
+                {
+                    Id = id,
+                    __Header_Promotion = "some-promotional-discount-percent"
+                });
+
+            if (response.Is(out Response<OrderResult> incomingMessage))
+            {
+                return Ok(incomingMessage.Message);
+            }
+
+            if (response.Is(out Response<OrderNotFoundResult> notfound))
+            {
+                return NotFound(notfound.Message);
+            }
 
             //var response = await requestClient.GetResponse<OrderResult>(
             //new { Id = id });
 
-
-            var order = await _orderService.GetOrderAsync(id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(order);
+            return BadRequest();
         }
 
         // PUT: api/Orders/5
