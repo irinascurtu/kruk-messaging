@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using Contracts.Events;
+using Contracts.Models;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Orders.Domain.Entities;
 using Orders.Service;
-using OrdersApi.Models;
 using OrdersApi.Service.Clients;
 using Stocks;
 
@@ -17,16 +19,24 @@ namespace OrdersApi.Controllers
         private readonly IMapper mapper;
         private readonly Greeter.GreeterClient grpcClient;
 
+
+        private readonly IPublishEndpoint publishEndpoint;//publish
+        private readonly ISendEndpointProvider sendEndpointProvider;//send
+
         public OrdersController(IOrderService orderService,
             IProductStockServiceClient productStockServiceClient,
             IMapper mapper,
-            Stocks.Greeter.GreeterClient grpcClient
+            Stocks.Greeter.GreeterClient grpcClient,
+            IPublishEndpoint publishEndpoint,
+            ISendEndpointProvider sendEndpointProvider
             )
         {
             _orderService = orderService;
             this.productStockServiceClient = productStockServiceClient;
             this.mapper = mapper;
             this.grpcClient = grpcClient;
+            this.publishEndpoint = publishEndpoint;
+            this.sendEndpointProvider = sendEndpointProvider;
         }
 
         // GET: api/Orders
@@ -82,27 +92,23 @@ namespace OrdersApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Order>> PostOrder(OrderModel model)
         {
-            var stocks = await productStockServiceClient.GetStock(
-                model.OrderItems.Select(p => p.ProductId).ToList());
-
-            //var stockRequest = new StockRequest();
-            //stockRequest.ProductId.AddRange(model.OrderItems.Select(p => p.ProductId));
-
-            //var request = grpcClient.GetStock(stockRequest);
-
-            //Verify if all products have stock
-            //if (!await VerifyStocks(stocks, model.OrderItems))
-            //{
-            //    ModelState.AddModelError("Item in cart", "Sorry, we don't have enough stock now");
-            //    //add model state error sorry, we can't process your order, we don't have enough stock for item: 
-            //}
-
             var orderToAdd = mapper.Map<Order>(model);
-            var createdOrder = await _orderService.AddOrderAsync(orderToAdd);
-            //diminish stock
+            // var createdOrder = await _orderService.AddOrderAsync(orderToAdd);
 
 
-            return CreatedAtAction("GetOrder", new { id = createdOrder.Id }, createdOrder);
+            //send a CreateOrder Command
+            var sendEndpoint = await sendEndpointProvider.GetSendEndpoint(new Uri("queue:create-order-command"));
+            await sendEndpoint.Send(model);
+
+            // publish OrderCreated Event
+            //var notifyOrderCreated = publishEndpoint.Publish(new OrderCreated()
+            //{
+            //    CreatedAt = createdOrder.OrderDate,
+            //    OrderId = createdOrder.Id
+            //});
+
+            return Accepted();
+            // return CreatedAtAction("GetOrder", new { id = createdOrder.Id }, createdOrder);
         }
 
         private async Task<bool> VerifyStocks(List<Service.Clients.ProductStock> stocks, List<OrderItemModel> orderItems)

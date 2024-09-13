@@ -1,4 +1,4 @@
-﻿namespace OrdersApi.Models
+﻿namespace Contracts.Models
 {
     public class OrderItemModel
     {

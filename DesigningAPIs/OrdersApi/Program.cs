@@ -1,15 +1,18 @@
+using Contracts.Infrastructure.Mappings;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Orders.Data;
 using Orders.Domain;
 using Orders.Service;
-using OrdersApi.Infrastructure.Mappings;
+using OrdersApi.Consumers;
 using OrdersApi.Service.Clients;
 using OrdersApi.Services;
 using Polly;
 using Polly.Hedging;
 using System.Net;
+using System.Reflection;
 
 namespace OrdersApi
 {
@@ -29,6 +32,60 @@ namespace OrdersApi
             builder.Services.AddDbContext<OrderContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IOrderService, OrderService>();
+
+            //add MassTransit middleware
+
+            //builder.Services.AddMassTransit(x =>
+            //{
+            //    x.UsingRabbitMq((context, cfg) =>
+            //    {
+            //        cfg.Host("rabbitmq://localhost", "/", h =>
+            //        {
+            //            h.Username("guest");
+            //            h.Password("guest");
+            //        });
+
+            //        cfg.ConfigureEndpoints(context);
+            //    });
+            //});
+
+
+
+            builder.Services.AddMassTransit(x =>
+            {
+                x.SetKebabCaseEndpointNameFormatter();
+                // x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("hellos", true));//takes the namespace too
+                // x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("hellos", false));//takes the namespace too
+
+                x.AddConsumer<OrderCreatedConsumer>();
+
+                //let masstransit scan and find consumers
+                //var entryAssembly = Assembly.GetEntryAssembly();
+                //x.AddConsumers(entryAssembly);
+
+                // Step 2: Select a Transport
+                x.UsingRabbitMq((context, cfg) =>
+                {
+                    cfg.ReceiveEndpoint("order-created", e =>
+                    {
+                        //e.Batch<OrderCreated>(b =>
+                        //    {
+                        //        b.MessageLimit = 5;
+                        //        b.TimeLimit = TimeSpan.FromSeconds(5);
+                        //    });
+
+                        //  e.UseRateLimit(100, TimeSpan.FromSeconds(1));
+                        e.ConfigureConsumer<OrderCreatedConsumer>(context);
+                      // e.UseMessageRetry(r => r.Interval(2, 1000));
+                    });
+
+                    // Step 4: Configure Endpoints
+                    // All consumers registered in step 1, will get
+                    // default endpoints created.
+                    cfg.ConfigureEndpoints(context);
+                });
+            });
+
 
             //add grpc client
             builder.Services.AddGrpcClient<Stocks.Greeter.GreeterClient>(o =>

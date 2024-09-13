@@ -1,13 +1,14 @@
 ﻿using Orders.Domain.Entities;
 
-namespace OrdersApi.Models
+namespace Contracts.Models
 {
-    public class OrderModel {
+    public class OrderModel
+    {
 
         public OrderModel()
         {
             Status = OrderStatus.Created;
-            
+
         }
         private OrderStatus Status { get; set; }
 
