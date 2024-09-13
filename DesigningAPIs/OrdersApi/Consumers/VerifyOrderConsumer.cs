@@ -6,6 +6,11 @@ namespace OrdersApi.Consumers
 {
     public class VerifyOrderConsumer : IConsumer<VerifyOrder>
     {
+        public VerifyOrderConsumer()
+        {
+            
+        }
+
         public async Task Consume(ConsumeContext<VerifyOrder> context)
         {
             if (!context.IsResponseAccepted<Order>())
