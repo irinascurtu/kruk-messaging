@@ -1,5 +1,13 @@
+using Contracts.Infrastructure.Mappings;
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Orders.Data;
+using Orders.Domain;
+using Orders.Service;
+using OrdersApi.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,23 +27,28 @@ namespace OrderCreation
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
+                    services.AddAutoMapper(typeof(OrderProfileMapping));
+                    services.AddDbContext<OrderContext>(options => options.UseSqlServer(hostContext.Configuration.GetConnectionString("DefaultConnection")));
+                    services.AddScoped<IOrderRepository, OrderRepository>();
+                    services.AddScoped<IOrderService, OrderService>();
+
+
                     services.AddMassTransit(x =>
                     {
                         x.SetKebabCaseEndpointNameFormatter();
 
-                        // By default, sagas are in-memory, but should be changed to a durable
-                        // saga repository.
-                        x.SetInMemorySagaRepositoryProvider();
 
                         var entryAssembly = Assembly.GetEntryAssembly();
-
                         x.AddConsumers(entryAssembly);
-                        x.AddSagaStateMachines(entryAssembly);
-                        x.AddSagas(entryAssembly);
-                        x.AddActivities(entryAssembly);
+                      
 
-                        x.UsingInMemory((context, cfg) =>
+                        x.UsingRabbitMq((context, cfg) =>
                         {
+                            cfg.ReceiveEndpoint("create-order-command", e =>
+                            {
+                                e.ConfigureConsumer<CreateOrderConsumer>(context);
+                            });
+
                             cfg.ConfigureEndpoints(context);
                         });
                     });

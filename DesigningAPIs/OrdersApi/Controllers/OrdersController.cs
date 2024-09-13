@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Contracts.Events;
 using Contracts.Models;
+using Contracts.Responses;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Orders.Domain.Entities;
@@ -23,12 +24,15 @@ namespace OrdersApi.Controllers
         private readonly IPublishEndpoint publishEndpoint;//publish
         private readonly ISendEndpointProvider sendEndpointProvider;//send
 
+        private readonly IRequestClient<VerifyOrder> requestClient;
+
         public OrdersController(IOrderService orderService,
             IProductStockServiceClient productStockServiceClient,
             IMapper mapper,
             Stocks.Greeter.GreeterClient grpcClient,
             IPublishEndpoint publishEndpoint,
-            ISendEndpointProvider sendEndpointProvider
+            ISendEndpointProvider sendEndpointProvider,
+            IRequestClient<VerifyOrder> requestClient
             )
         {
             _orderService = orderService;
@@ -37,6 +41,7 @@ namespace OrdersApi.Controllers
             this.grpcClient = grpcClient;
             this.publishEndpoint = publishEndpoint;
             this.sendEndpointProvider = sendEndpointProvider;
+            this.requestClient = requestClient;
         }
 
         // GET: api/Orders
@@ -51,6 +56,13 @@ namespace OrdersApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Order>> GetOrder(int id)
         {
+            var response = await requestClient.GetResponse<OrderResult>(
+                new VerifyOrder { Id = id });
+
+            //var response = await requestClient.GetResponse<OrderResult>(
+            //new { Id = id });
+
+
             var order = await _orderService.GetOrderAsync(id);
             if (order == null)
             {
@@ -101,11 +113,7 @@ namespace OrdersApi.Controllers
             await sendEndpoint.Send(model);
 
             // publish OrderCreated Event
-            //var notifyOrderCreated = publishEndpoint.Publish(new OrderCreated()
-            //{
-            //    CreatedAt = createdOrder.OrderDate,
-            //    OrderId = createdOrder.Id
-            //});
+
 
             return Accepted();
             // return CreatedAtAction("GetOrder", new { id = createdOrder.Id }, createdOrder);
