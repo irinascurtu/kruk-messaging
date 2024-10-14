@@ -8,13 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
-    <PackageReference Include="Grpc.AspNetCore" Version="2.49.0" />
-    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.8.0" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.9.0" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.0.0-beta.12" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
@@ -22,12 +16,6 @@
     <ProjectReference Include="..\Orders.Data\Orders.Data.csproj" />
     <ProjectReference Include="..\Orders.Domain\Orders.Domain.csproj" />
     <ProjectReference Include="..\Orders.Service\Orders.Service.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Protobuf Include="..\Stocks\Protos\greet.proto" GrpcServices="Both">
-      <Link>Protos\greet.proto</Link>
-    </Protobuf>
   </ItemGroup>
 
 </Project>

@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 
 namespace Contracts.Events
 {
-    public class OrderCanceled
+    public class OrderReceived
     {
-        public Guid OrderId{ get; set; }
+
+        public int Id { get; set; }
+        public Guid OrderId { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 }

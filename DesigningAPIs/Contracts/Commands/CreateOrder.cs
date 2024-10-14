@@ -8,5 +8,6 @@ namespace Contracts.Commands
 {
     public class CreateOrder
     {
+        public string OrderId { get; set; }
     }
 }

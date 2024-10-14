@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using PaymentProcessor.Models;
 using PaymentProcessor.Services;
 
 namespace PaymentProcessor.Controllers
@@ -17,20 +16,8 @@ namespace PaymentProcessor.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(OrderCheckoutModel model)
+        public IActionResult Get()
         {
-            //validate
-            //transform to call external
-            //await external call to WackyPayments. if successfull
-
-                //save payment trace in PaymentProcessorDB either as failed or successfull
-            //Ok ();
-            //NotOK()
-            //}
-            //notify OrderApi and change OrderStatus in a PUT- or call ORders Endpoint-external servie
-
-
-            //
             return Ok("Payment Processor API");
         }
     }
